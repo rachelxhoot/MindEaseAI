@@ -1,8 +1,9 @@
 import torch
-from modelscope import snapshot_download
+from modelscope import snapshot_download, AutoModel, AutoTokenizer
 from ipex_llm.transformers import AutoModelForCausalLM
 from transformers import AutoTokenizer
 import os
+import argparse
 
 def download_and_quantize_model(model_name, cache_dir, revision='master', quantize_dir='quantized_model'):
     """
@@ -30,7 +31,14 @@ def download_and_quantize_model(model_name, cache_dir, revision='master', quanti
     print(f"量化后的模型和分词器已保存到: {quantize_dir}")
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--embedding', action='store_true', help="Download only the specified embedding model if this flag is present")
+
+    # 解析命令行参数
+    args = parser.parse_args()
+
     # 定义模型名称、缓存目录和量化目录
+    embedding_model = 'AI-ModelScope/bge-small-zh-v1.5'
     model_name = 'Qwen/Qwen2-1.5B-Instruct'
     cache_dir = 'model/qwen2chat_src'
     quantize_dir = 'model/qwen2chat_int4'
@@ -39,5 +47,7 @@ if __name__ == '__main__':
     os.makedirs(cache_dir, exist_ok=True)
     os.makedirs(quantize_dir, exist_ok=True)
 
-    # 调用函数下载和量化模型
-    download_and_quantize_model(model_name, cache_dir, revision='master', quantize_dir=quantize_dir)
+    if args.embedding:
+        model_dir = snapshot_download(embedding_model, cache_dir=cache_dir, revision='master')
+    else:
+        download_and_quantize_model(model_name, cache_dir, revision='master', quantize_dir=quantize_dir)

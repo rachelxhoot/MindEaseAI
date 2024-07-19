@@ -24,3 +24,20 @@
 ### Streamlit
 `pip install streamlit`
 `streamlit run app/run_streamlit_stream.py`
+
+## 基于 Llamaindex 构建一个简易的 RAG 系统
+
+### 环境准备
+
+`conda activate ipex`
+
+`pip install PyMuPDF llama-index-vector-stores-chroma llama-index-readers-file llama-index-embeddings-huggingface llama-index`
+
+### embedding 模型准备
+`python3 model_prepare.py --embedding`
+
+### run rag
+
+data path: `rag/data/`，需修改 `run_rag.py -> Config`中对应的参数
+
+`python3 rag/run_rag.pys`
