@@ -7,7 +7,6 @@
 ```bash
 git clone https://github.com/rachelxhoot/MindEaseAI.git
 cd MindEaseAI
-pip install --upgrade pip
 pip install -r requirements.txt  
 python3 demo.py # 中间需要手动输入自己的dsw号
 ```

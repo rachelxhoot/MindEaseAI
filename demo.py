@@ -100,7 +100,7 @@ def bot(history):
 
     # 设置检索器
     retriever = VectorDBRetriever(
-        vector_store, embed_model, query_mode="default", similarity_top_k=0.5
+        vector_store, embed_model, query_mode="default", similarity_top_k=1
     )
 
     print(f"Query engine created with retriever: {type(retriever).__name__}")
