@@ -134,7 +134,7 @@ def bot(history):
         ])
         
     messages.extend([
-            {"role": "user", "content": f"{response_rag}\n{prompt}"}
+            {"role": "user", "content": f"{response_rag}\n 你是一个心理咨询AI助手, 请根据前面的专业知识, 回应下面用户的消息: {prompt}"}
         ])
     print(messages) 
     #     messages = [{"role": "user", "content": prompt}]  # 构建消息格式
@@ -177,10 +177,10 @@ def stop_generation():
     stop_event.set()  # 设置停止事件
 
 # 使用Gradio创建Web界面
-with gr.Blocks() as demo:
-    gr.Markdown("# Qwen 聊天机器人")
-    chatbot = gr.Chatbot()  # 聊天界面组件
-    msg = gr.Textbox()  # 用户输入文本框
+with gr.Blocks(css=".chatbox {background-color: #f5f5f5; border-radius: 10px; padding: 10px; }") as demo:
+    gr.Markdown("# MindEaseAI Chatbot")
+    chatbot = gr.Chatbot(label="AI 心理咨询助手", container=True).style(container=False)  # 聊天界面组件
+    msg = gr.Textbox(placeholder="请输入您的问题或感受...", label="您的消息")  # 用户输入文本框
     clear = gr.Button("清除")  # 清除按钮
     stop = gr.Button("停止生成")  # 停止生成按钮
 

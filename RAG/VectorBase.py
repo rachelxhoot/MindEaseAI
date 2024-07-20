@@ -30,11 +30,11 @@ def load_vector_database(persist_dir: str) -> ChromaVectorStore:
     if os.path.exists(persist_dir):
         print(f"正在加载现有的向量数据库: {persist_dir}")
         chroma_client = chromadb.PersistentClient(path=persist_dir)
-        chroma_collection = chroma_client.get_collection("llama2_paper")
+        chroma_collection = chroma_client.get_collection("paper")
     else:
         print(f"创建新的向量数据库: {persist_dir}")
         chroma_client = chromadb.PersistentClient(path=persist_dir)
-        chroma_collection = chroma_client.create_collection("llama2_paper")
+        chroma_collection = chroma_client.create_collection("paper")
     print(f"Vector store loaded with {chroma_collection.count()} documents")
     return ChromaVectorStore(chroma_collection=chroma_collection)
 
