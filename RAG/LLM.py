@@ -1,6 +1,10 @@
 import os
 from typing import Dict, List, Optional, Tuple, Union
 
+from ipex_llm.llamaindex.llms import IpexLLM
+from utils import messages_to_prompt, completion_to_prompt
+from config import Config
+
 PROMPT_TEMPLATE = dict(
     RAG_PROMPT_TEMPALTE="""使用以上下文来回答用户的问题。如果你不知道答案，就说你不知道。总是使用中文回答。
         问题: {question}
@@ -86,3 +90,28 @@ class DeepSeekChat(BaseModel):
             temperature=0.1
         )
         return response.choices[0].message.content
+    
+def setup_local_llm(config: Config) -> IpexLLM:
+    """
+    设置语言模型
+    
+    Args:
+        config (Config): 配置对象
+    
+    Returns:
+        IpexLLM: 配置好的语言模型
+    """
+    #*****************
+    #Hyperparameter  do_sample
+    #************
+    return IpexLLM.from_model_id_low_bit(
+        model_name=config.model_path,
+        tokenizer_name=config.tokenizer_path,
+        context_window=384,
+        max_new_tokens=config.max_new_tokens,
+        generate_kwargs={"temperature": 0.7, "do_sample": True},
+        model_kwargs={},
+        messages_to_prompt=messages_to_prompt,
+        completion_to_prompt=completion_to_prompt,
+        device_map="cpu",
+    )
