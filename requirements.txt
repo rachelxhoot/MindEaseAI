@@ -1,3 +1,6 @@
+ipex-llm==2.1.0b20240711 
+gradio 
+streamlit
 openai
 zhipuai
 numpy

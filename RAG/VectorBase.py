@@ -15,46 +15,6 @@ from llama_index.core.retrievers import BaseRetriever
 from llama_index.core.vector_stores import VectorStoreQuery
 
 import chromadb
-
-# # Reference:
-# class VectorStore:
-#     def __init__(self, document: List[str] = ['']) -> None:
-#         self.document = document
-
-#     # 获得文档的向量表示
-#     def get_vector(self, EmbeddingModel: BaseEmbeddings) -> List[List[float]]:
-        
-#         self.vectors = []
-#         for doc in tqdm(self.document, desc="Calculating embeddings"):
-#             self.vectors.append(EmbeddingModel.get_embedding(doc))
-#         return self.vectors
-    
-#     # 数据库持久化，本地保存
-#     def persist(self, path: str = 'storage'):
-#         if not os.path.exists(path):
-#             os.makedirs(path)
-#         with open(f"{path}/doecment.json", 'w', encoding='utf-8') as f:
-#             json.dump(self.document, f, ensure_ascii=False)
-#         if self.vectors:
-#             with open(f"{path}/vectors.json", 'w', encoding='utf-8') as f:
-#                 json.dump(self.vectors, f)
-
-#     # 从本地加载数据库
-#     def load_vector(self, path: str = 'storage'):
-#         with open(f"{path}/vectors.json", 'r', encoding='utf-8') as f:
-#             self.vectors = json.load(f)
-#         with open(f"{path}/doecment.json", 'r', encoding='utf-8') as f:
-#             self.document = json.load(f)
-
-#     def get_similarity(self, vector1: List[float], vector2: List[float]) -> float:
-#         return BaseEmbeddings.cosine_similarity(vector1, vector2)
-    
-#     # 根据问题检索相关的文档片段
-#     def query(self, query: str, EmbeddingModel: BaseEmbeddings, k: int = 1) -> List[str]:
-#         query_vector = EmbeddingModel.get_embedding(query)
-#         result = np.array([self.get_similarity(query_vector, vector)
-#                           for vector in self.vectors])
-#         return np.array(self.document)[result.argsort()[-k:][::-1]].tolist()
     
 def load_vector_database(persist_dir: str) -> ChromaVectorStore:
     """
@@ -125,3 +85,43 @@ class VectorDBRetriever(BaseRetriever):
             nodes_with_scores.append(NodeWithScore(node=node, score=score))
         print(f"Retrieved {len(nodes_with_scores)} nodes with scores")
         return nodes_with_scores
+    
+# # Reference:
+# class VectorStore:
+#     def __init__(self, document: List[str] = ['']) -> None:
+#         self.document = document
+
+#     # 获得文档的向量表示
+#     def get_vector(self, EmbeddingModel: BaseEmbeddings) -> List[List[float]]:
+        
+#         self.vectors = []
+#         for doc in tqdm(self.document, desc="Calculating embeddings"):
+#             self.vectors.append(EmbeddingModel.get_embedding(doc))
+#         return self.vectors
+    
+#     # 数据库持久化，本地保存
+#     def persist(self, path: str = 'storage'):
+#         if not os.path.exists(path):
+#             os.makedirs(path)
+#         with open(f"{path}/doecment.json", 'w', encoding='utf-8') as f:
+#             json.dump(self.document, f, ensure_ascii=False)
+#         if self.vectors:
+#             with open(f"{path}/vectors.json", 'w', encoding='utf-8') as f:
+#                 json.dump(self.vectors, f)
+
+#     # 从本地加载数据库
+#     def load_vector(self, path: str = 'storage'):
+#         with open(f"{path}/vectors.json", 'r', encoding='utf-8') as f:
+#             self.vectors = json.load(f)
+#         with open(f"{path}/doecment.json", 'r', encoding='utf-8') as f:
+#             self.document = json.load(f)
+
+#     def get_similarity(self, vector1: List[float], vector2: List[float]) -> float:
+#         return BaseEmbeddings.cosine_similarity(vector1, vector2)
+    
+#     # 根据问题检索相关的文档片段
+#     def query(self, query: str, EmbeddingModel: BaseEmbeddings, k: int = 1) -> List[str]:
+#         query_vector = EmbeddingModel.get_embedding(query)
+#         result = np.array([self.get_similarity(query_vector, vector)
+#                           for vector in self.vectors])
+#         return np.array(self.document)[result.argsort()[-k:][::-1]].tolist()

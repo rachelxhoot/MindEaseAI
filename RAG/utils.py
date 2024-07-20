@@ -19,6 +19,107 @@ from llama_index.core.node_parser import SentenceSplitter
 
 enc = tiktoken.get_encoding("cl100k_base")
 
+def download_and_quantize_model(model_name, cache_dir, quantize_dir, revision='master'):
+    """
+    Download, quantize, and save the model and tokenizer.
+
+    Parameters:
+    - model_name: Name of the model.
+    - cache_dir: Directory to cache the downloaded model.
+    - quantize_dir: Directory to save the quantized model and tokenizer.
+    - revision: Model version, default is 'master'.
+    """
+    model_dir = snapshot_download(model_name, cache_dir=os.path.join(cache_dir), revision=revision)
+    print(f"Model downloaded to: {model_dir}")
+
+    model_path = os.path.join(cache_dir, model_name.replace('.', '___'))
+    model = AutoModelForCausalLM.from_pretrained(model_path, load_in_low_bit='sym_int4', trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
+    print(f"Model and tokenizer loaded from: {model_path}")
+
+    model.save_low_bit(quantize_dir)
+    tokenizer.save_pretrained(quantize_dir)
+    print(f"Quantized model and tokenizer saved to: {quantize_dir}")
+
+def download_embedding_model(embedding_model, cache_dir):
+    model_dir = snapshot_download(embedding_model, cache_dir=cache_dir, revision='master')
+    print(f"Embedding model downloaded to: {model_dir}")
+
+# use:
+# download_and_quantize_model("Qwen/Qwen2-1.5B-Instruct", "qwen2chat_src", "qwen2chat_int4")
+# download_embedding_model("AI-ModelScope/bge-small-zh-v1.5", "qwen2chat_src")
+
+def load_data(data_path: str) -> List[TextNode]:
+    """
+    加载并处理PDF数据
+    
+    Args:
+        data_path (str): PDF文件路径
+    
+    Returns:
+        List[TextNode]: 处理后的文本节点列表
+    """
+    loader = PyMuPDFReader()
+    documents = loader.load(file_path=data_path)
+
+    
+    #*****************
+    #Hyperparameter  of the document splitter: chunk_size=384
+    #************
+    text_parser = SentenceSplitter(chunk_size=384)
+    text_chunks = []
+    doc_idxs = []
+    for doc_idx, doc in enumerate(documents):
+        cur_text_chunks = text_parser.split_text(doc.text)
+        text_chunks.extend(cur_text_chunks)
+        doc_idxs.extend([doc_idx] * len(cur_text_chunks))
+
+    nodes = []
+    for idx, text_chunk in enumerate(text_chunks):
+        node = TextNode(text=text_chunk)
+        src_doc = documents[doc_idxs[idx]]
+        node.metadata = src_doc.metadata
+        nodes.append(node)
+    return nodes
+
+def completion_to_prompt(completion: str) -> str:
+    """
+    将完成转换为提示格式
+    
+    Args:
+        completion (str): 完成的文本
+    
+    Returns:
+        str: 格式化后的提示
+    """
+    return f"<|system|>\n</s>\n<|user|>\n{completion}</s>\n<|assistant|>\n"
+
+def messages_to_prompt(messages: List[dict]) -> str:
+    """
+    将消息列表转换为提示格式
+    
+    Args:
+        messages (List[dict]): 消息列表
+    
+    Returns:
+        str: 格式化后的提示
+    """
+    prompt = ""
+    for message in messages:
+        if message.role == "system":
+            prompt += f"<|system|>\n{message.content}</s>\n"
+        elif message.role == "user":
+            prompt += f"<|user|>\n{message.content}</s>\n"
+        elif message.role == "assistant":
+            prompt += f"<|assistant|>\n{message.content}</s>\n"
+
+    if not prompt.startswith("<|system|>\n"):
+        prompt = "<|system|>\n</s>\n" + prompt
+
+    prompt = prompt + "<|assistant|>\n"
+
+    return prompt
+
 # # Reference:
 # class ReadFiles:
 #     """
@@ -155,105 +256,3 @@ enc = tiktoken.get_encoding("cl100k_base")
 #         with open(self.path, mode='r', encoding='utf-8') as f:
 #             content = json.load(f)
 #         return content
-
-
-def download_and_quantize_model(model_name, cache_dir, quantize_dir, revision='master'):
-    """
-    Download, quantize, and save the model and tokenizer.
-
-    Parameters:
-    - model_name: Name of the model.
-    - cache_dir: Directory to cache the downloaded model.
-    - quantize_dir: Directory to save the quantized model and tokenizer.
-    - revision: Model version, default is 'master'.
-    """
-    model_dir = snapshot_download(model_name, cache_dir=os.path.join(cache_dir), revision=revision)
-    print(f"Model downloaded to: {model_dir}")
-
-    model_path = os.path.join(cache_dir, model_name.replace('.', '___'))
-    model = AutoModelForCausalLM.from_pretrained(model_path, load_in_low_bit='sym_int4', trust_remote_code=True)
-    tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
-    print(f"Model and tokenizer loaded from: {model_path}")
-
-    model.save_low_bit(quantize_dir)
-    tokenizer.save_pretrained(quantize_dir)
-    print(f"Quantized model and tokenizer saved to: {quantize_dir}")
-
-def download_embedding_model(embedding_model, cache_dir):
-    model_dir = snapshot_download(embedding_model, cache_dir=cache_dir, revision='master')
-    print(f"Embedding model downloaded to: {model_dir}")
-
-# use:
-# download_and_quantize_model("Qwen/Qwen2-1.5B-Instruct", "qwen2chat_src", "qwen2chat_int4")
-# download_embedding_model("AI-ModelScope/bge-small-zh-v1.5", "qwen2chat_src")
-
-def load_data(data_path: str) -> List[TextNode]:
-    """
-    加载并处理PDF数据
-    
-    Args:
-        data_path (str): PDF文件路径
-    
-    Returns:
-        List[TextNode]: 处理后的文本节点列表
-    """
-    loader = PyMuPDFReader()
-    documents = loader.load(file_path=data_path)
-
-    
-    #*****************
-    #Hyperparameter  of the document splitter: chunk_size=384
-    #************
-    text_parser = SentenceSplitter(chunk_size=384)
-    text_chunks = []
-    doc_idxs = []
-    for doc_idx, doc in enumerate(documents):
-        cur_text_chunks = text_parser.split_text(doc.text)
-        text_chunks.extend(cur_text_chunks)
-        doc_idxs.extend([doc_idx] * len(cur_text_chunks))
-
-    nodes = []
-    for idx, text_chunk in enumerate(text_chunks):
-        node = TextNode(text=text_chunk)
-        src_doc = documents[doc_idxs[idx]]
-        node.metadata = src_doc.metadata
-        nodes.append(node)
-    return nodes
-
-def completion_to_prompt(completion: str) -> str:
-    """
-    将完成转换为提示格式
-    
-    Args:
-        completion (str): 完成的文本
-    
-    Returns:
-        str: 格式化后的提示
-    """
-    return f"<|system|>\n</s>\n<|user|>\n{completion}</s>\n<|assistant|>\n"
-
-def messages_to_prompt(messages: List[dict]) -> str:
-    """
-    将消息列表转换为提示格式
-    
-    Args:
-        messages (List[dict]): 消息列表
-    
-    Returns:
-        str: 格式化后的提示
-    """
-    prompt = ""
-    for message in messages:
-        if message.role == "system":
-            prompt += f"<|system|>\n{message.content}</s>\n"
-        elif message.role == "user":
-            prompt += f"<|user|>\n{message.content}</s>\n"
-        elif message.role == "assistant":
-            prompt += f"<|assistant|>\n{message.content}</s>\n"
-
-    if not prompt.startswith("<|system|>\n"):
-        prompt = "<|system|>\n</s>\n" + prompt
-
-    prompt = prompt + "<|assistant|>\n"
-
-    return prompt

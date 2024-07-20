@@ -1,24 +1,15 @@
 # MindEaseAI Demo
 
-## Embedding 向量化模块
+## Run
+魔搭Notebook环境: `ubuntu22.04-py310-torch2.1.2-tf2.14.0-1.14.0`
 
-- 作用：将文档片段向量化
-- 目前实现：基于embedding模型的API对文本进行向量化
-- To-do: 接入本地开源模型
-
-## 文档加载和切分
-- `read_file_content`支持的文件类型：pdf、md、txt
-- `get_chunk` 按 Token 的长度来切分文档，按 `\n` 进行粗切分
-
-## 数据库 + 向量检索
-
-- 向量数据库： 存放文档片段和对应的向量表示
-- 检索模块：根据 Query （问题）检索相关的文档片段
-- Query：把用户提出的问题向量化，然后去数据库中检索相关的文档片段，最后返回检索到的文档片段
-
-## LLM
-- 目前实现：DeepSeek LLM API 调用
-- To-do：接入本地开源模型
+在 Terminal 执行下面命令行
+```bash
+git clone https://github.com/rachelxhoot/MindEaseAI.git
+cd MindEaseAI
+pip install -r requirements.txt  
+python3 demo.py # 中间需要手动输入自己的dsw号
+```
 
 ## Reference：
 - [TinyRAG](https://github.com/datawhalechina/tiny-universe/tree/main/content/TinyRAG)

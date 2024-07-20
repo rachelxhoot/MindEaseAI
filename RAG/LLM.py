@@ -2,7 +2,7 @@ import os
 from typing import Dict, List, Optional, Tuple, Union
 
 from ipex_llm.llamaindex.llms import IpexLLM
-from utils import messages_to_prompt, completion_to_prompt
+from .utils import messages_to_prompt, completion_to_prompt
 from config import Config
 
 PROMPT_TEMPLATE = dict(

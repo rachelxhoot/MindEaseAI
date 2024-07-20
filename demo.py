@@ -1,67 +1,33 @@
+import os
+import time
+import torch
+from typing import Optional
+from threading import Thread, Event
+import gradio as gr
+from transformers import AutoTokenizer, TextIteratorStreamer
+
 from RAG.VectorBase import load_vector_database, VectorDBRetriever
-from RAG.utils import download_and_quantize_model, download_embedding_model, load_data, completion_to_prompt, messages_to_prompt
+from RAG.utils import download_and_quantize_model, download_embedding_model, load_data
 from RAG.LLM import setup_local_llm
+
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+from llama_index.core.schema import NodeWithScore
+from llama_index.core.query_engine import RetrieverQueryEngine
+from llama_index.core.vector_stores import VectorStoreQuery
+from llama_index.core import get_response_synthesizer
 
 from config import Config
 
-# # 没有保存数据库
-# docs = ReadFiles('./data').get_content(max_token_len=600, cover_content=150) # 获得data目录下的所有文件内容并分割
-# vector = VectorStore(docs)
-# embedding = ZhipuEmbedding() # 创建EmbeddingModel
-# vector.get_vector(EmbeddingModel=embedding)
-# vector.persist(path='storage') # 将向量和文档内容保存到storage目录下，下次再用就可以直接加载本地的数据库
-
-# question = 'git的原理是什么?'
-
-# content = vector.query(question, model='zhipu', k=1)[0]
-# chat = InternLMChat(path='model_path')
-# print(chat.chat(question, [], content))
-
-from typing import Any, List, Optional
-
-
-from llama_index.embeddings.huggingface import HuggingFaceEmbedding
-from llama_index.core.schema import NodeWithScore, TextNode
-from llama_index.core.query_engine import RetrieverQueryEngine
-from llama_index.core.vector_stores import VectorStoreQuery
-
-from llama_index.core import get_response_synthesizer
-
-import os
-import time
-os.environ["OMP_NUM_THREADS"] = "8"
-
-import torch
-from typing import Any, List, Optional
-
-
-
-import gradio as gr
-from transformers import AutoTokenizer, TextIteratorStreamer
 from ipex_llm.transformers import AutoModelForCausalLM
 from ipex_llm.llamaindex.llms import IpexLLM
-import torch
-from threading import Thread, Event
-
-# 从llama_index库导入HuggingFaceEmbedding类，用于将文本转换为向量表示
-from llama_index.embeddings.huggingface import HuggingFaceEmbedding
-# 从llama_index库导入VectorStoreQuery类，用于构造向量存储的查询，支持语义相似度搜索
-from llama_index.core.vector_stores import VectorStoreQuery
-# 从llama_index库导入RetrieverQueryEngine类，用于协调检索器和响应生成，执行端到端的问答过程
-from llama_index.core.query_engine import RetrieverQueryEngine
-# NodeWithScore: 表示带有相关性分数的节点，用于排序检索结果
-# TextNode: 表示文本块，是索引和检索的基本单位。节点存储文本内容及其元数据，便于构建知识图谱和语义搜索
-from llama_index.core.schema import NodeWithScore, TextNode
-
-
-# model preare
-download_and_quantize_model("Qwen/Qwen2-1.5B-Instruct", "./qwen2chat_src", "./qwen2chat_int4")
-download_embedding_model("AI-ModelScope/bge-small-zh-v1.5", "./qwen2chat_src")
-
-
 
 config = Config()
-# config.question = message
+os.environ["OMP_NUM_THREADS"] = config.omp_num_threads
+
+# 准备模型
+download_and_quantize_model(config.model_name, config.cache_path, config.model_path)
+download_embedding_model(config.embedding_model_name, config.cache_path)
+
 # 设置嵌入模型
 embed_model = HuggingFaceEmbedding(model_name=config.embedding_model_path)
 
@@ -154,8 +120,6 @@ def bot(history):
     print(str(response_rag))
     ######################rag query end#################################
 
-
-
     '''
     chat with history
     (small llms have some problem with chatting, so try to muti tests)
@@ -230,4 +194,7 @@ with gr.Blocks() as demo:
 if __name__ == "__main__":
     print("启动 Gradio 界面...")
     demo.queue()  # 启用队列处理请求
-    demo.launch(root_path='/dsw-579143/proxy/7860/')  # 兼容魔搭情况下的路由
+    # 提示用户输入DSW号
+    dsw_number = input("请输入DSW号 (例如: 525085)")
+    root_path = f"/dsw-{dsw_number}/proxy/7860/"
+    demo.launch(root_path=root_path)  # 兼容魔搭情况下的路由
