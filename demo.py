@@ -100,7 +100,7 @@ def bot(history):
 
     # 设置检索器
     retriever = VectorDBRetriever(
-        vector_store, embed_model, query_mode="default", similarity_top_k=1
+        vector_store, embed_model, query_mode="default", similarity_top_k=0.5
     )
 
     print(f"Query engine created with retriever: {type(retriever).__name__}")
@@ -177,9 +177,9 @@ def stop_generation():
     stop_event.set()  # 设置停止事件
 
 # 使用Gradio创建Web界面
-with gr.Blocks(css=".chatbox {background-color: #f5f5f5; border-radius: 10px; padding: 10px; }") as demo:
+with gr.Blocks() as demo:
     gr.Markdown("# MindEaseAI Chatbot")
-    chatbot = gr.Chatbot(label="AI 心理咨询助手", container=True).style(container=False)  # 聊天界面组件
+    chatbot = gr.Chatbot(label="AI 心理咨询助手", show_label=True)  # 聊天界面组件
     msg = gr.Textbox(placeholder="请输入您的问题或感受...", label="您的消息")  # 用户输入文本框
     clear = gr.Button("清除")  # 清除按钮
     stop = gr.Button("停止生成")  # 停止生成按钮
