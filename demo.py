@@ -6,20 +6,19 @@ from threading import Thread, Event
 import gradio as gr
 from transformers import AutoTokenizer, TextIteratorStreamer
 
-from RAG.VectorBase import load_vector_database, VectorDBRetriever
-from RAG.utils import download_and_quantize_model, download_embedding_model, load_data
-from RAG.LLM import setup_local_llm
 
+from RAG.utils import download_and_quantize_model, download_embedding_model, load_data
+
+from RAG.VectorBase import load_vector_database
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.core.schema import NodeWithScore
-from llama_index.core.query_engine import RetrieverQueryEngine
 from llama_index.core.vector_stores import VectorStoreQuery
-from llama_index.core import get_response_synthesizer
+
 
 from config import Config
 
 from ipex_llm.transformers import AutoModelForCausalLM
-from ipex_llm.llamaindex.llms import IpexLLM
+
 
 config = Config()
 os.environ["OMP_NUM_THREADS"] = config.omp_num_threads
@@ -32,7 +31,7 @@ download_embedding_model(config.embedding_model_name, config.cache_path)
 embed_model = HuggingFaceEmbedding(model_name=config.embedding_model_path)
 
 # 设置语言模型
-llm = setup_local_llm(config)
+# llm = setup_local_llm(config)
 
 # 加载向量数据库
 vector_store = load_vector_database(persist_dir=config.persist_dir)
@@ -97,9 +96,26 @@ def bot(history):
         if query_result.similarities is not None:
             score = query_result.similarities[index]
         nodes_with_scores.append(NodeWithScore(node=node, score=score))
-
+        
+    
+    # Convert retrieved documents into context strings
+    context_strings = [node.node.text for node in nodes_with_scores]
+    context_scores = [node.score for node in nodes_with_scores]
+    
+    # Cutoff of the score/Hyperparameter, 
+    # If the score is small, the query_result has no meaning for the question.
+    # TODO: advanced tricks in 
+    # https://docs.llamaindex.ai/en/stable/module_guides/querying/node_postprocessors/node_postprocessors/
+    if context_scores[0] < 0.3:
+        context_strings = [""]
+    # Concatenate context strings to form a single context string for the LLM
+    context_string = "\n".join(context_strings)
+    
+    print("Scores list")
+    print(context_scores)
+    '''
     # 设置检索器
-    retriever = VectorDBRetriever(
+    retriever = rag.VectorDBRetriever(
         vector_store, embed_model, query_mode="default", similarity_top_k=1
     )
 
@@ -115,15 +131,19 @@ def bot(history):
 
     # 执行查询
     print("开始RAG最后生成")
+    start_time_rag = time.time()
     response_rag = query_engine.query(query_str)
-    print("response")
+    print(f"\n\nRAG最后生成完成，用时: {end_time - start_time_rag:.2f} 秒")
     print(str(response_rag))
+    '''
     ######################rag query end#################################
+
 
     '''
     chat with history
-    (small llms have some problem with chatting, so try to muti tests)
+    (tiny llms have some problems with chatting, so try to do muti tests)
     '''
+    # TODO: more awesome chat templates
     messages = []
     for user_msg, response in history:
         if user_msg and not response:  # 如果当前正在处理的用户消息没有响应
@@ -134,7 +154,7 @@ def bot(history):
         ])
         
     messages.extend([
-            {"role": "user", "content": f"{response_rag}\n 你是一个心理咨询AI助手, 请根据前面的专业知识, 回应下面用户的消息: {prompt}"}
+            {"role": "user", "content": f"{context_string}\n 你是一个心理咨询AI助手, 请根据前面的专业知识, 回应下面用户的消息: {prompt}"}
         ])
     print(messages) 
     #     messages = [{"role": "user", "content": prompt}]  # 构建消息格式
