@@ -1,0 +1,10 @@
+cache_path: ./model_src
+data_path: ./data/2106.01702v1.pdf
+embedding_model_name: AI-ModelScope/bge-small-zh-v1.5
+embedding_model_path: ./model_src/AI-ModelScope/bge-small-zh-v1___5
+max_new_tokens: 128
+model_name: Qwen/Qwen2-1.5B-Instruct
+model_path: ./model_int4
+omp_num_threads: '8'
+persist_dir: ./chroma_db
+tokenizer_path: ./model_int4

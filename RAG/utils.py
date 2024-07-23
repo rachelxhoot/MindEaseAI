@@ -21,6 +21,23 @@ enc = tiktoken.get_encoding("cl100k_base")
 
 from config import Config
 
+import yaml
+
+def load_config(file_path):
+    with open(file_path, 'r') as file:
+        return yaml.safe_load(file) or {}
+
+def save_config(file_path, config_data):
+    with open(file_path, 'w') as file:
+        yaml.dump(config_data, file)
+
+def get_config_path():
+    # 获取脚本文件的目录
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    # 构建配置文件的完整路径
+    config_path = os.path.join(script_dir, '..', 'config.yaml')
+    return config_path
+
 def download_and_quantize_model(model_name, cache_dir, quantize_dir, revision='master', low_bit="sym_int4"):
     """
     Download, quantize, and save the model and tokenizer.
@@ -44,9 +61,12 @@ def download_and_quantize_model(model_name, cache_dir, quantize_dir, revision='m
     print(f"Quantized model and tokenizer saved to: {quantize_dir}")
 
 def download_embedding_model(embedding_model, cache_dir):
-    config = Config()
+    config_path = get_config_path()
+    config = load_config(config_path)
     embedding_model_dir = snapshot_download(embedding_model, cache_dir=cache_dir, revision='master')
-    config.embedding_model_path = embedding_model_dir
+    # 更新配置数据
+    config['embedding_model_path'] = embedding_model_dir
+    save_config(config_path, config)
     print(f"Embedding model downloaded to: {embedding_model_dir}")
 
 # use:
