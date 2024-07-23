@@ -63,11 +63,12 @@ class Config:
     
         """删除指定目录下的所有文件和子目录"""
         for path in paths:
-            for root, dirs, files in os.walk(path, topdown=False):
-                for name in files:
-                    os.remove(os.path.join(root, name))
-                for name in dirs:
-                    os.rmdir(os.path.join(root, name))
+            if os.mkdir(path):
+                for root, dirs, files in os.walk(path, topdown=False):
+                    for name in files:
+                        os.remove(os.path.join(root, name))
+                    for name in dirs:
+                        os.rmdir(os.path.join(root, name))
             # 确认目录为空后删除目录本身
             os.rmdir(path)
 
