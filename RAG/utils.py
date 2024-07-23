@@ -19,24 +19,58 @@ from llama_index.core.node_parser import SentenceSplitter
 
 enc = tiktoken.get_encoding("cl100k_base")
 
-from config import Config
-
 import yaml
+import shutil
 
-def load_config(file_path):
-    with open(file_path, 'r') as file:
-        return yaml.safe_load(file) or {}
+class Config:
+    def __init__(self):
+        self.config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'config.yaml')
+        self.config_data = self.load_config()
 
-def save_config(file_path, config_data):
-    with open(file_path, 'w') as file:
-        yaml.dump(config_data, file)
+    def load_config(self):
+        """从文件中加载配置数据"""
+        if os.path.exists(self.config_path):
+            with open(self.config_path, 'r') as file:
+                return yaml.safe_load(file) or {}
+        return {}
 
-def get_config_path():
-    # 获取脚本文件的目录
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    # 构建配置文件的完整路径
-    config_path = os.path.join(script_dir, '..', 'config.yaml')
-    return config_path
+    def save_config(self):
+        """将配置数据保存到文件"""
+        with open(self.config_path, 'w') as file:
+            yaml.dump(self.config_data, file, default_flow_style=False)
+
+    def get(self, key, default=None):
+        """获取配置项的值"""
+        return self.config_data.get(key, default)
+
+    def set(self, key, value):
+        """设置配置项的值"""
+        self.config_data[key] = value
+        self.save_config()  # 更新配置后立即保存
+
+    def __str__(self):
+        """返回配置数据的字符串表示，方便打印和调试"""
+        return yaml.dump(self.config_data, default_flow_style=False)
+    
+    def initialize(self):
+        paths = []
+        persist_dir = self.get('persist_dir')
+        paths.append(persist_dir)
+        cache_path = self.get('cache_path')
+        paths.append(cache_path)
+        model_path = self.get('model_path')
+        paths.append(model_path)
+    
+        """删除指定目录下的所有文件和子目录"""
+        for path in paths:
+            for root, dirs, files in os.walk(path, topdown=False):
+                for name in files:
+                    os.remove(os.path.join(root, name))
+                for name in dirs:
+                    os.rmdir(os.path.join(root, name))
+            # 确认目录为空后删除目录本身
+            os.rmdir(path)
+
 
 def download_and_quantize_model(model_name, cache_dir, quantize_dir, revision='master', low_bit="sym_int4"):
     """
@@ -61,12 +95,10 @@ def download_and_quantize_model(model_name, cache_dir, quantize_dir, revision='m
     print(f"Quantized model and tokenizer saved to: {quantize_dir}")
 
 def download_embedding_model(embedding_model, cache_dir):
-    config_path = get_config_path()
-    config = load_config(config_path)
     embedding_model_dir = snapshot_download(embedding_model, cache_dir=cache_dir, revision='master')
     # 更新配置数据
-    config['embedding_model_path'] = embedding_model_dir
-    save_config(config_path, config)
+    config = Config()
+    config.set('embedding_model_path', embedding_model_dir)
     print(f"Embedding model downloaded to: {embedding_model_dir}")
 
 # use:
