@@ -19,7 +19,9 @@ from llama_index.core.node_parser import SentenceSplitter
 
 enc = tiktoken.get_encoding("cl100k_base")
 
-def download_and_quantize_model(model_name, cache_dir, quantize_dir, revision='master'):
+from config import Config
+
+def download_and_quantize_model(model_name, cache_dir, quantize_dir, revision='master', low_bit="sym_int4"):
     """
     Download, quantize, and save the model and tokenizer.
 
@@ -33,7 +35,7 @@ def download_and_quantize_model(model_name, cache_dir, quantize_dir, revision='m
     print(f"Model downloaded to: {model_dir}")
 
     model_path = os.path.join(cache_dir, model_name.replace('.', '___'))
-    model = AutoModelForCausalLM.from_pretrained(model_path, load_in_low_bit='sym_int4', trust_remote_code=True)
+    model = AutoModelForCausalLM.from_pretrained(model_path, load_in_low_bit=low_bit, trust_remote_code=True)
     tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
     print(f"Model and tokenizer loaded from: {model_path}")
 
@@ -42,8 +44,10 @@ def download_and_quantize_model(model_name, cache_dir, quantize_dir, revision='m
     print(f"Quantized model and tokenizer saved to: {quantize_dir}")
 
 def download_embedding_model(embedding_model, cache_dir):
-    model_dir = snapshot_download(embedding_model, cache_dir=cache_dir, revision='master')
-    print(f"Embedding model downloaded to: {model_dir}")
+    config = Config()
+    embedding_model_dir = snapshot_download(embedding_model, cache_dir=cache_dir, revision='master')
+    config.embedding_model_path = embedding_model_dir
+    print(f"Embedding model downloaded to: {embedding_model_dir}")
 
 # use:
 # download_and_quantize_model("Qwen/Qwen2-1.5B-Instruct", "qwen2chat_src", "qwen2chat_int4")

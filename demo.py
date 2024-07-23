@@ -7,7 +7,7 @@ import gradio as gr
 from transformers import AutoTokenizer, TextIteratorStreamer
 
 
-from RAG.utils import download_and_quantize_model, download_embedding_model, load_data
+from RAG.utils import load_data
 
 from RAG.VectorBase import load_vector_database
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
@@ -22,10 +22,6 @@ from ipex_llm.transformers import AutoModelForCausalLM
 
 config = Config()
 os.environ["OMP_NUM_THREADS"] = config.omp_num_threads
-
-# 准备模型
-download_and_quantize_model(config.model_name, config.cache_path, config.model_path)
-download_embedding_model(config.embedding_model_name, config.cache_path)
 
 # 设置嵌入模型
 embed_model = HuggingFaceEmbedding(model_name=config.embedding_model_path)
