@@ -19,7 +19,61 @@ from llama_index.core.node_parser import SentenceSplitter
 
 enc = tiktoken.get_encoding("cl100k_base")
 
-def download_and_quantize_model(model_name, cache_dir, quantize_dir, revision='master'):
+import yaml
+import shutil
+
+class Config:
+    def __init__(self):
+        self.config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'config.yaml')
+        self.config_data = self.load_config()
+
+    def load_config(self):
+        """从文件中加载配置数据"""
+        if os.path.exists(self.config_path):
+            with open(self.config_path, 'r') as file:
+                return yaml.safe_load(file) or {}
+        return {}
+
+    def save_config(self):
+        """将配置数据保存到文件"""
+        with open(self.config_path, 'w') as file:
+            yaml.dump(self.config_data, file, default_flow_style=False)
+
+    def get(self, key, default=None):
+        """获取配置项的值"""
+        return self.config_data.get(key, default)
+
+    def set(self, key, value):
+        """设置配置项的值"""
+        self.config_data[key] = value
+        self.save_config()  # 更新配置后立即保存
+
+    def __str__(self):
+        """返回配置数据的字符串表示，方便打印和调试"""
+        return yaml.dump(self.config_data, default_flow_style=False)
+    
+    def initialize(self):
+        paths = []
+        persist_dir = self.get('persist_dir')
+        paths.append(persist_dir)
+        cache_path = self.get('cache_path')
+        paths.append(cache_path)
+        model_path = self.get('model_path')
+        paths.append(model_path)
+    
+        """删除指定目录下的所有文件和子目录"""
+        for path in paths:
+            if os.mkdir(path):
+                for root, dirs, files in os.walk(path, topdown=False):
+                    for name in files:
+                        os.remove(os.path.join(root, name))
+                    for name in dirs:
+                        os.rmdir(os.path.join(root, name))
+            # 确认目录为空后删除目录本身
+            os.rmdir(path)
+
+
+def download_and_quantize_model(model_name, cache_dir, quantize_dir, revision='master', low_bit="sym_int4"):
     """
     Download, quantize, and save the model and tokenizer.
 
@@ -33,7 +87,7 @@ def download_and_quantize_model(model_name, cache_dir, quantize_dir, revision='m
     print(f"Model downloaded to: {model_dir}")
 
     model_path = os.path.join(cache_dir, model_name.replace('.', '___'))
-    model = AutoModelForCausalLM.from_pretrained(model_path, load_in_low_bit='sym_int4', trust_remote_code=True)
+    model = AutoModelForCausalLM.from_pretrained(model_path, load_in_low_bit=low_bit, trust_remote_code=True)
     tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
     print(f"Model and tokenizer loaded from: {model_path}")
 
@@ -42,8 +96,11 @@ def download_and_quantize_model(model_name, cache_dir, quantize_dir, revision='m
     print(f"Quantized model and tokenizer saved to: {quantize_dir}")
 
 def download_embedding_model(embedding_model, cache_dir):
-    model_dir = snapshot_download(embedding_model, cache_dir=cache_dir, revision='master')
-    print(f"Embedding model downloaded to: {model_dir}")
+    embedding_model_dir = snapshot_download(embedding_model, cache_dir=cache_dir, revision='master')
+    # 更新配置数据
+    config = Config()
+    config.set('embedding_model_path', embedding_model_dir)
+    print(f"Embedding model downloaded to: {embedding_model_dir}")
 
 # use:
 # download_and_quantize_model("Qwen/Qwen2-1.5B-Instruct", "qwen2chat_src", "qwen2chat_int4")

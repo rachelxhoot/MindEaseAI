@@ -7,50 +7,33 @@ import gradio as gr
 from transformers import AutoTokenizer, TextIteratorStreamer
 
 
-from RAG.utils import download_and_quantize_model, download_embedding_model, load_data
+from RAG.utils import Config
 
 from RAG.VectorBase import load_vector_database
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.core.schema import NodeWithScore
 from llama_index.core.vector_stores import VectorStoreQuery
 
-
-from config import Config
-
 from ipex_llm.transformers import AutoModelForCausalLM
 
 
 config = Config()
-os.environ["OMP_NUM_THREADS"] = config.omp_num_threads
 
-# 准备模型
-download_and_quantize_model(config.model_name, config.cache_path, config.model_path)
-download_embedding_model(config.embedding_model_name, config.cache_path)
+os.environ["OMP_NUM_THREADS"] = config.get("omp_num_threads")
 
 # 设置嵌入模型
-embed_model = HuggingFaceEmbedding(model_name=config.embedding_model_path)
+embed_model = HuggingFaceEmbedding(model_name=config.get("embedding_model_path"))
 
 # 设置语言模型
 # llm = setup_local_llm(config)
 
 # 加载向量数据库
-vector_store = load_vector_database(persist_dir=config.persist_dir)
-
-# 加载和处理数据
-nodes = load_data(data_path=config.data_path)
-for node in nodes:
-    node_embedding = embed_model.get_text_embedding(
-        node.get_content(metadata_mode="all")
-    )
-    node.embedding = node_embedding
-
-# 将 node 添加到向量存储
-vector_store.add(nodes)
+vector_store = load_vector_database(persist_dir=config.get("persist_dir"))
 
 ##############################rag start#########################
 
 # 加载模型和tokenizer
-load_path = config.model_path  # 模型路径
+load_path = config.get("model_path")  # 模型路径
 model = AutoModelForCausalLM.load_low_bit(load_path, trust_remote_code=True)  # 加载低位模型
 tokenizer = AutoTokenizer.from_pretrained(load_path, trust_remote_code=True)  # 加载对应的tokenizer
 
@@ -76,7 +59,7 @@ def bot(history):
     
     ######################rag query#################################
     # 设置查询
-    config.question = prompt
+    # config.get("question") = prompt
     query_str = prompt
     query_embedding = embed_model.get_query_embedding(prompt)
 

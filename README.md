@@ -7,7 +7,17 @@
 ```bash
 git clone https://github.com/rachelxhoot/MindEaseAI.git
 cd MindEaseAI
-pip install -r requirements.txt  
+pip install -r requirements.txt
+```
+
+### 准备model和vector database （只需执行一次）
+（Optional）修改 `config.yaml` 中的 `embedding_model_name` 和 `model_name` 为要运行的模型
+```bash
+python3 prepare.py
+```
+
+### 运行 RAG App
+```bash
 python3 demo.py # 中间需要手动输入自己的dsw号
 ```
 
