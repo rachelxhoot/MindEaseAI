@@ -12,14 +12,15 @@ download_embedding_model(config.get("embedding_model_name"), config.get("cache_p
 
 # 加载和处理数据
 embed_model = HuggingFaceEmbedding(model_name=config.get("embedding_model_path"))
-vector_store = load_vector_database(persist_dir=config.get("persist_dir"))
+data_path = config.get("data_path")
+vector_store = load_vector_database(data_path, "load")
 
-nodes = load_data(data_path=config.get("data_path"))
-for node in nodes:
-    node_embedding = embed_model.get_text_embedding(
-        node.get_content(metadata_mode="all")
-    )
-    node.embedding = node_embedding
-
-# 将 node 添加到向量存储
-vector_store.add(nodes)
+for type, dir in data_path:
+    nodes = load_data(data_path=dir)
+    for node in nodes:
+        node_embedding = embed_model.get_text_embedding(
+            node.get_content(metadata_mode="all")
+        )
+        node.embedding = node_embedding
+    # 将 node 添加到向量存储
+    vector_store[type].add(nodes)

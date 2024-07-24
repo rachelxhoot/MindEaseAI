@@ -27,8 +27,8 @@ embed_model = HuggingFaceEmbedding(model_name=config.get("embedding_model_path")
 # 设置语言模型
 # llm = setup_local_llm(config)
 
-# 加载向量数据库
-vector_store = load_vector_database(persist_dir=config.get("persist_dir"))
+data_path = config.get("data_path")
+vector_store = load_vector_database(data_path, "load")
 
 ##############################rag start#########################
 

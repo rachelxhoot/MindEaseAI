@@ -15,28 +15,49 @@ from llama_index.core.retrievers import BaseRetriever
 from llama_index.core.vector_stores import VectorStoreQuery
 
 import chromadb
-    
-def load_vector_database(persist_dir: str) -> ChromaVectorStore:
+class ChromaVectorStore:
+    def __init__(self, chroma_collection):
+        self.chroma_collection = chroma_collection
+
+    def count(self):
+        return self.chroma_collection.count()
+
+def load_vector_database(persist_dirs: dict, action: str) -> dict:
     """
-    加载或创建向量数据库
+    加载或创建多个向量数据库
     
     Args:
-        persist_dir (str): 持久化目录路径
+        persist_dirs (dict): 包含数据类型及其对应持久化目录路径的字典
+        action (str): 操作类型 (load: 加载; create: 创建)
     
     Returns:
-        ChromaVectorStore: 向量存储对象
+        dict: 包含所有加载的向量存储对象的字典
     """
-    # 检查持久化目录是否存在
-    if os.path.exists(persist_dir):
-        print(f"正在加载现有的向量数据库: {persist_dir}")
-        chroma_client = chromadb.PersistentClient(path=persist_dir)
-        chroma_collection = chroma_client.get_collection("paper")
-    else:
-        print(f"创建新的向量数据库: {persist_dir}")
-        chroma_client = chromadb.PersistentClient(path=persist_dir)
-        chroma_collection = chroma_client.create_collection("paper")
-    print(f"Vector store loaded with {chroma_collection.count()} documents")
-    return ChromaVectorStore(chroma_collection=chroma_collection)
+    collections = {}
+    
+    for type, persist_dir in persist_dirs.items():
+        if action == "load" and os.path.exists(persist_dir):
+            print(f"正在加载现有的向量数据库: {persist_dir}")
+            chroma_client = chromadb.PersistentClient(path=persist_dir)
+            chroma_collection = chroma_client.get_collection(type)
+        elif action == "create":
+            print(f"创建新的向量数据库: {persist_dir}")
+            chroma_client = chromadb.PersistentClient(path=persist_dir)
+            chroma_collection = chroma_client.create_collection(type)
+        
+        print(f"Vector store loaded with {chroma_collection.count()} documents for type {type}")
+        collections[type] = ChromaVectorStore(chroma_collection=chroma_collection)
+    
+    return collections
+
+# # 示例使用
+# persist_dirs = {
+#     "type1": "path/to/dir1",
+#     "type2": "path/to/dir2",
+#     "type3": "path/to/dir3"
+# }
+# collections = load_vector_database(persist_dirs, "load")
+
 
 class VectorDBRetriever(BaseRetriever):
     """向量数据库检索器"""
