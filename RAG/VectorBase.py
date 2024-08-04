@@ -15,48 +15,39 @@ from llama_index.core.retrievers import BaseRetriever
 from llama_index.core.vector_stores import VectorStoreQuery
 
 import chromadb
-class ChromaVectorStore:
-    def __init__(self, chroma_collection):
-        self.chroma_collection = chroma_collection
 
-    def count(self):
-        return self.chroma_collection.count()
+from RAG.utils import Config
 
-def load_vector_database(persist_dirs: dict, action: str) -> dict:
+def load_vector_database(persist_dir: dict, action: str) -> dict:
     """
     加载或创建多个向量数据库
     
     Args:
-        persist_dirs (dict): 包含数据类型及其对应持久化目录路径的字典
+        persist_dirs : 持久化目录路径
         action (str): 操作类型 (load: 加载; create: 创建)
     
     Returns:
         dict: 包含所有加载的向量存储对象的字典
     """
     collections = {}
-    
-    for type, persist_dir in persist_dirs.items():
-        if action == "load" and os.path.exists(persist_dir):
-            print(f"正在加载现有的向量数据库: {persist_dir}")
-            chroma_client = chromadb.PersistentClient(path=persist_dir)
-            chroma_collection = chroma_client.get_collection(type)
-        elif action == "create":
-            print(f"创建新的向量数据库: {persist_dir}")
-            chroma_client = chromadb.PersistentClient(path=persist_dir)
-            chroma_collection = chroma_client.create_collection(type)
-        
-        print(f"Vector store loaded with {chroma_collection.count()} documents for type {type}")
-        collections[type] = ChromaVectorStore(chroma_collection=chroma_collection)
-    
-    return collections
 
-# # 示例使用
-# persist_dirs = {
-#     "type1": "path/to/dir1",
-#     "type2": "path/to/dir2",
-#     "type3": "path/to/dir3"
-# }
-# collections = load_vector_database(persist_dirs, "load")
+    config = Config()
+
+    chroma_client = chromadb.PersistentClient(path=persist_dir)
+    
+    
+    if action == "load" and os.path.exists(persist_dir):
+        print(f"正在加载现有的向量数据库: {persist_dir}")
+        for type, _ in config.get('data_path').items():
+            chroma_collection = chroma_client.get_collection(type)
+            collections[type] = ChromaVectorStore(chroma_collection=chroma_collection)
+    elif action == "create" and os.path.exists(persist_dir):
+        print(f"创建新的向量数据库: {persist_dir}")
+        for type, _ in config.get('data_path').items():
+            chroma_collection = chroma_client.create_collection(type)
+            collections[type] = ChromaVectorStore(chroma_collection=chroma_collection)
+        
+    return collections
 
 
 class VectorDBRetriever(BaseRetriever):
