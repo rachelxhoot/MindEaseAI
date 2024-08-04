@@ -63,14 +63,15 @@ class Config:
     
         """删除指定目录下的所有文件和子目录"""
         for path in paths:
-            if os.mkdir(path):
+            if os.path.isdir(path):
                 for root, dirs, files in os.walk(path, topdown=False):
                     for name in files:
                         os.remove(os.path.join(root, name))
                     for name in dirs:
                         os.rmdir(os.path.join(root, name))
-            # 确认目录为空后删除目录本身
-            os.rmdir(path)
+                os.rmdir(path)
+            else:
+                print(f"The path {path} is not a directory or does not exist.")
 
 
 def download_and_quantize_model(model_name, cache_dir, quantize_dir, revision='master', low_bit="sym_int4"):

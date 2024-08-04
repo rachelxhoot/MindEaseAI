@@ -15,28 +15,40 @@ from llama_index.core.retrievers import BaseRetriever
 from llama_index.core.vector_stores import VectorStoreQuery
 
 import chromadb
-    
-def load_vector_database(persist_dir: str) -> ChromaVectorStore:
+
+from RAG.utils import Config
+
+def load_vector_database(persist_dir: dict, action: str) -> dict:
     """
-    加载或创建向量数据库
+    加载或创建多个向量数据库
     
     Args:
-        persist_dir (str): 持久化目录路径
+        persist_dirs : 持久化目录路径
+        action (str): 操作类型 (load: 加载; create: 创建)
     
     Returns:
-        ChromaVectorStore: 向量存储对象
+        dict: 包含所有加载的向量存储对象的字典
     """
-    # 检查持久化目录是否存在
-    if os.path.exists(persist_dir):
+    collections = {}
+
+    config = Config()
+
+    chroma_client = chromadb.PersistentClient(path=persist_dir)
+    
+    
+    if action == "load" and os.path.exists(persist_dir):
         print(f"正在加载现有的向量数据库: {persist_dir}")
-        chroma_client = chromadb.PersistentClient(path=persist_dir)
-        chroma_collection = chroma_client.get_collection("paper")
-    else:
+        for type, _ in config.get('data_path').items():
+            chroma_collection = chroma_client.get_collection(type)
+            collections[type] = ChromaVectorStore(chroma_collection=chroma_collection)
+    elif action == "create" and os.path.exists(persist_dir):
         print(f"创建新的向量数据库: {persist_dir}")
-        chroma_client = chromadb.PersistentClient(path=persist_dir)
-        chroma_collection = chroma_client.create_collection("paper")
-    print(f"Vector store loaded with {chroma_collection.count()} documents")
-    return ChromaVectorStore(chroma_collection=chroma_collection)
+        for type, _ in config.get('data_path').items():
+            chroma_collection = chroma_client.create_collection(type)
+            collections[type] = ChromaVectorStore(chroma_collection=chroma_collection)
+        
+    return collections
+
 
 class VectorDBRetriever(BaseRetriever):
     """向量数据库检索器"""

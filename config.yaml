@@ -1,5 +1,7 @@
 cache_path: ./model_src
-data_path: ./data/2106.01702v1.pdf
+data_path: 
+  type1: ./data/type1
+  type2: ./data/type2
 embedding_model_name: AI-ModelScope/bge-small-zh-v1.5
 embedding_model_path: ./model_src/AI-ModelScope/bge-small-zh-v1___5
 max_new_tokens: 128
