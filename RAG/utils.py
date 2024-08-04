@@ -110,13 +110,27 @@ def download_embedding_model(embedding_model, cache_dir):
 def load_data(data_path):
     with open(data_path, 'r', encoding='utf-8') as file:
         data = json.load(file)
-    nodes = []
+    documents = ""
     for item in data:
-        node = {
-            "question": item.get("question", ""),
-            "description": item.get("description", ""),
-            "answers": [answer.get("answer_text", "") for answer in item.get("answers", [])]
-        }
+        question = item.get("question", "")
+        description = item.get("description", "")
+        answers = " ".join(answer.get("answer_text", "") for answer in item.get("answers", []))
+        text_block = f"Question: {question}\nDescription: {description}\nAnswers: {answers}"
+        documents += text_block
+    
+    text_parser = SentenceSplitter(chunk_size=384)
+    text_chunks = []
+    doc_idxs = []
+    for doc_idx, doc in enumerate(documents):
+        cur_text_chunks = text_parser.split_text(doc)
+        text_chunks.extend(cur_text_chunks)
+        doc_idxs.extend([doc_idx] * len(cur_text_chunks))
+
+    nodes = []
+    for idx, text_chunk in enumerate(text_chunks):
+        node = TextNode(text=text_chunk)
+        src_doc = documents[doc_idxs[idx]]
+        # node.metadata = src_doc.metadata
         nodes.append(node)
     return nodes
 

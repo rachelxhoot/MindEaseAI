@@ -1,9 +1,9 @@
 cache_path: ./model_src
 data_path: 
-  家庭关系: ./data/type1
-  个人成长与心理: ./data/type2
-  人际关系与社会适应: ./data/type3
-  职业与学习: ./data/type4
+  type1: ./data/type1
+  type2: ./data/type2
+  type3: ./data/type3
+  type4: ./data/type4
 embedding_model_name: AI-ModelScope/bge-small-zh-v1.5
 embedding_model_path: ./model_src/AI-ModelScope/bge-small-zh-v1___5
 max_new_tokens: 128
