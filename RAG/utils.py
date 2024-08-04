@@ -107,7 +107,20 @@ def download_embedding_model(embedding_model, cache_dir):
 # download_and_quantize_model("Qwen/Qwen2-1.5B-Instruct", "qwen2chat_src", "qwen2chat_int4")
 # download_embedding_model("AI-ModelScope/bge-small-zh-v1.5", "qwen2chat_src")
 
-def load_data(data_path: str) -> List[TextNode]:
+def load_data(data_path):
+    with open(data_path, 'r', encoding='utf-8') as file:
+        data = json.load(file)
+    nodes = []
+    for item in data:
+        node = {
+            "question": item.get("question", ""),
+            "description": item.get("description", ""),
+            "answers": [answer.get("answer_text", "") for answer in item.get("answers", [])]
+        }
+        nodes.append(node)
+    return nodes
+
+def load_data_pdf(data_path: str) -> List[TextNode]:
     """
     加载并处理PDF数据
     

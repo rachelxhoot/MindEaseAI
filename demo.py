@@ -139,18 +139,18 @@ def bot(history, type):
     messages.extend([
             {"role": "user", "content": 
              f'''{context_string}\n 
-             请根据前面的专业知识, 回应下面用户的消息: {prompt}
+            请根据前面的知识参考, 回应下面用户的消息: {prompt}
 
             你是一个心理咨询AI助手, 你的目标是帮助用户舒服地分享他们的想法和情感。你的回答应该是同情、鼓励和支持的，同时保持温暖和温和的语气。
-            要求：你的回复应该是简单温和的一句话，至少包括2个部分
-            (1) 承认他们的情绪并确认他们的感受
-            (2) 引导来访者继续阐述他们的感受和体验 (必须有这一步)
+            要求：你的回复应该是简单温和的一句话，至少包括2个部分: 承认他们的情绪并确认他们的感受;引导来访者继续阐述他们的感受和体验 (必须有这一步)
+            
 
             示例：
-
             用户：我最近一直感到很焦虑。
-
             回应：听到你感到焦虑，我很抱歉。焦虑确实让人很难受。你觉得是什么原因让你感到特别焦虑呢？我在这里聆听你。
+            
+            
+            再次强调：请一定要记得继续引导来访者倾诉！！！
             '''}
         ])
     print(messages) 
@@ -197,11 +197,11 @@ def stop_generation():
 with gr.Blocks() as demo:
     gr.Markdown("# MindEaseAI Chatbot")
     chatbot = gr.Chatbot(label="AI 心理咨询助手", show_label=True)  # 聊天界面组件
+    type_selector = gr.Dropdown(choices=["type1", "type2"], label="选择类型")
     msg = gr.Textbox(placeholder="请输入您的问题或感受...", label="您的消息")  # 用户输入文本框
     clear = gr.Button("清除")  # 清除按钮
     stop = gr.Button("停止生成")  # 停止生成按钮
-    type_selector = gr.Dropdown(choices=["type1", "type2"], label="选择类型")
-
+    
     # 设置用户输入提交后的处理流程
     msg.submit(user, [msg, chatbot], [msg, chatbot], queue=False).then(
         bot, [chatbot, type_selector], chatbot
