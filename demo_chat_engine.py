@@ -35,24 +35,14 @@ embed_model = HuggingFaceEmbedding(model_name=config.get("embedding_model_path")
 llm = setup_local_llm(config)
 
 # 加载向量数据库
-vector_store = load_vector_database(persist_dir=config.get("persist_dir"))
-
-# 加载和处理数据
-nodes = load_data(data_path=config.data_path)
-for node in nodes:
-    node_embedding = embed_model.get_text_embedding(
-        node.get_content(metadata_mode="all")
-    )
-    node.embedding = node_embedding
-
-# 将 node 添加到向量存储
-vector_store.add(nodes)
-
+persist_dir = config.get("persist_dir")
+vector_store = load_vector_database(persist_dir, "load")
 
 # store memory
 # https://docs.llamaindex.ai/en/stable/examples/chat_engine/chat_engine_context/
 memory = ChatMemoryBuffer.from_defaults(token_limit=3900)
-index = VectorStoreIndex.from_vector_store(embed_model=embed_model, vector_store=vector_store)
+# vector_store[type]
+# index = VectorStoreIndex.from_vector_store(embed_model=embed_model, vector_store=vector_store)
 
 
 # 创建一个停止事件，用于控制生成过程的中断
@@ -114,16 +104,47 @@ def user(user_message, history):
     return "", history + [[user_message, None]]  # 返回空字符串和更新后的历史记录
 
 # 定义机器人回复生成函数
-def bot(history):
+def bot(history, type):
     stop_event.clear()  # 重置停止事件
     prompt = history[-1][0]  # 获取最新的用户输入
     
     config.question = prompt
     query_str = prompt
     
-    print(f"Query engine created with retriever: {type(retriever).__name__}")
+    print(f"Query engine created with retriever: {type}")
     print(f"Query string length: {len(query_str)}")
     print(f"Query string: {query_str}")
+
+    ######################chat_engine#################################
+
+    # 设置检索器
+    retriever = VectorDBRetriever(
+        vector_store[type], embed_model, query_mode="default", similarity_top_k=1
+    )
+
+    query_engine = RetrieverQueryEngine.from_args(retriever, llm=llm, streaming=True)
+
+    custom_prompt = PromptTemplate(
+        """\
+你是一个心理咨询AI助手, 请根据以下的专业知识和对话记录, 回应下面用户的消息:\
+
+<对话记录>
+{chat_history}
+
+<专业知识>
+{question}
+
+<用户问题>
+"""
+    )
+    chat_engine = CondenseQuestionChatEngine.from_defaults(
+        query_engine=query_engine,
+        condense_question_prompt=custom_prompt,
+        chat_history=memory.get_all(),
+        verbose=True,
+        llm=llm,
+    )
+    ######################chat_engine end#################################
 
    
 
@@ -158,10 +179,11 @@ with gr.Blocks() as demo:
     msg = gr.Textbox(placeholder="请输入您的问题或感受...", label="您的消息")  # 用户输入文本框
     clear = gr.Button("清除")  # 清除按钮
     stop = gr.Button("停止生成")  # 停止生成按钮
+    type_selector = gr.Dropdown(choices=["type1", "type2"], label="选择类型")  # 类型选择器
 
     # 设置用户输入提交后的处理流程
     msg.submit(user, [msg, chatbot], [msg, chatbot], queue=False).then(
-        bot, chatbot, chatbot
+        bot, [chatbot, type_selector], chatbot
     )
     clear.click(lambda: None, None, chatbot, queue=False)  # 清除按钮功能
     stop.click(stop_generation, queue=False)  # 停止生成按钮功能

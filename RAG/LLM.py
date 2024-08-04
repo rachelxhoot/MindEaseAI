@@ -2,8 +2,7 @@ import os
 from typing import Dict, List, Optional, Tuple, Union
 
 from ipex_llm.llamaindex.llms import IpexLLM
-from .utils import messages_to_prompt, completion_to_prompt
-from config import Config
+from .utils import messages_to_prompt, completion_to_prompt, Config
 
 PROMPT_TEMPLATE = dict(
     RAG_PROMPT_TEMPALTE="""使用以上下文来回答用户的问题。如果你不知道答案，就说你不知道。总是使用中文回答。
@@ -105,10 +104,10 @@ def setup_local_llm(config: Config) -> IpexLLM:
     #Hyperparameter  do_sample
     #************
     return IpexLLM.from_model_id_low_bit(
-        model_name=config.model_path,
-        tokenizer_name=config.tokenizer_path,
+        model_name=config.get("model_path"),
+        tokenizer_name=config.get("tokenizer_path"),
         context_window=384,
-        max_new_tokens=config.max_new_tokens,
+        max_new_tokens=config.get("max_new_tokens"),
         generate_kwargs={"temperature": 0.7, "do_sample": True},
         model_kwargs={},
         messages_to_prompt=messages_to_prompt,
