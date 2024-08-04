@@ -27,8 +27,8 @@ embed_model = HuggingFaceEmbedding(model_name=config.get("embedding_model_path")
 # 设置语言模型
 # llm = setup_local_llm(config)
 
-data_path = config.get("data_path")
-vector_store = load_vector_database(data_path, "load")
+persist_dir = config.get("persist_dir")
+vector_store = load_vector_database(persist_dir, "load")
 
 ##############################rag start#########################
 
@@ -52,7 +52,7 @@ def user(user_message, history):
     return "", history + [[user_message, None]]  # 返回空字符串和更新后的历史记录
 
 # 定义机器人回复生成函数
-def bot(history):
+def bot(history, type):
     stop_event.clear()  # 重置停止事件
     prompt = history[-1][0]  # 获取最新的用户输入
     
@@ -69,7 +69,7 @@ def bot(history):
     vector_store_query = VectorStoreQuery(
         query_embedding=query_embedding, similarity_top_k=2, mode=query_mode
     )
-    query_result = vector_store.query(vector_store_query)
+    query_result = vector_store[type].query(vector_store_query)
 
     # 处理查询结果
     print("开始处理检索结果")
@@ -140,7 +140,7 @@ def bot(history):
             {"role": "user", "content": f"{context_string}\n 你是一个心理咨询AI助手, 请根据前面的专业知识, 回应下面用户的消息: {prompt}"}
         ])
     print(messages) 
-    #     messages = [{"role": "user", "content": prompt}]  # 构建消息格式
+
     text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)  # 应用聊天模板
     model_inputs = tokenizer([text], return_tensors="pt").to(device)  # 对输入进行编码并移到指定设备
     
@@ -186,10 +186,11 @@ with gr.Blocks() as demo:
     msg = gr.Textbox(placeholder="请输入您的问题或感受...", label="您的消息")  # 用户输入文本框
     clear = gr.Button("清除")  # 清除按钮
     stop = gr.Button("停止生成")  # 停止生成按钮
+    type_selector = gr.Dropdown(choices=["type1", "type2"], label="选择类型")
 
     # 设置用户输入提交后的处理流程
     msg.submit(user, [msg, chatbot], [msg, chatbot], queue=False).then(
-        bot, chatbot, chatbot
+        bot, [chatbot, type_selector], chatbot
     )
     clear.click(lambda: None, None, chatbot, queue=False)  # 清除按钮功能
     stop.click(stop_generation, queue=False)  # 停止生成按钮功能
