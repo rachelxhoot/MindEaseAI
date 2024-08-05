@@ -197,7 +197,10 @@ def stop_generation():
 with gr.Blocks() as demo:
     gr.Markdown("# MindEaseAI Chatbot")
     chatbot = gr.Chatbot(label="AI 心理咨询助手", show_label=True)  # 聊天界面组件
-    type_selector = gr.Dropdown(choices=["type1", "type2"], label="选择类型")
+    type_selector = gr.Dropdown(
+        choices=[("家庭关系", "type1"), ("个人成长与心理", "type2"), ("人际关系与社会适应", "type3"), ("职业与学习", "type4")],
+        label="选择类型"
+    )
     msg = gr.Textbox(placeholder="请输入您的问题或感受...", label="您的消息")  # 用户输入文本框
     clear = gr.Button("清除")  # 清除按钮
     stop = gr.Button("停止生成")  # 停止生成按钮
@@ -215,4 +218,4 @@ if __name__ == "__main__":
     # 提示用户输入DSW号
     dsw_number = input("请输入DSW号 (例如: 525085)")
     root_path = f"/dsw-{dsw_number}/proxy/7860/"
-    demo.launch(root_path=root_path)  # 兼容魔搭情况下的路由
+    demo.launch(root_path=root_path, share=True)  # 兼容魔搭情况下的路由
