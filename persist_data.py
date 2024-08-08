@@ -21,6 +21,7 @@ data_path = config.get("data_path")
 vector_store = load_vector_database(config.get('persist_dir'), "create")
 
 for type, dir in data_path.items():
+    print(type)
     if os.path.isdir(dir):
         files = [os.path.join(dir, file) for file in os.listdir(dir) if os.path.isfile(os.path.join(dir, file))]
         for file_path in files:

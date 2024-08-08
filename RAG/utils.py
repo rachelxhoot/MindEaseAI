@@ -58,8 +58,8 @@ class Config:
     
     def initialize(self):
         paths = []
-        persist_dir = self.get('persist_dir')
-        paths.append(persist_dir)
+        # persist_dir = self.get('persist_dir')
+        # paths.append(persist_dir)
         cache_path = self.get('cache_path')
         paths.append(cache_path)
         model_path = self.get('model_path')
