@@ -1,6 +1,7 @@
 
+import { DataItem } from "./type";
 
-export const data = [
+export const data: DataItem[] = [
   {
     content: 'dayjs 如何使用 fromNow',
     createAt: 1_686_437_950_084,

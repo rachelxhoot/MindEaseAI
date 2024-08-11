@@ -1,15 +1,15 @@
-// components/ChatDisplay.js
-import { ActionsBar, ChatList, useControls, useCreateStore } from '@lobehub/ui';
-import { data } from '../data'; // 确保 data 文件路径正确
+// components/ChatDisplay.tsx
+import { ActionsBar, ChatList, ChatListProps, useControls, useCreateStore } from '@lobehub/ui';
+import { data } from '../data';
 
 const ChatDisplay = () => {
   const store = useCreateStore();
-  const control = useControls(
+  const control: ChatListProps| any = useControls(
     {
       showTitle: false,
       type: {
         options: ['doc', 'chat'],
-        value: 'chat',
+        value: 'doc',
       },
     },
     { store }
@@ -24,7 +24,7 @@ const ChatDisplay = () => {
       right: 0,
       overflowY: 'auto', 
       padding: '10px', 
-      backgroundColor: '#fff' 
+      
     }}>
       <ChatList
         data={data}
@@ -40,3 +40,4 @@ const ChatDisplay = () => {
 };
 
 export default ChatDisplay;
+
