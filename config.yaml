@@ -5,8 +5,8 @@ data_path:
   type3: ./data/type3
   type4: ./data/type4
 embedding_model_name: AI-ModelScope/bge-small-zh-v1.5
-embedding_model_path: ./model_src/AI-ModelScope/bge-small-zh-v1___5
-max_new_tokens: 128
+embedding_model_path: ./
+max_new_tokens: 2048
 model_name: qwen/Qwen1.5-4B-Chat
 model_path: ./model_int4
 omp_num_threads: '8'
