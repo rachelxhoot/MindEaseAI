@@ -12,7 +12,7 @@ import gradio as gr
 
 
 
-from RAG.utils import Config, load_data
+from RAG.utils import Config
 from RAG.LLM import setup_local_llm
 
 from RAG.VectorBase import load_vector_database, VectorDBRetriever
@@ -21,7 +21,7 @@ from llama_index.core.query_engine import RetrieverQueryEngine
 from llama_index.core import VectorStoreIndex, PromptTemplate
 from llama_index.core.memory import ChatMemoryBuffer
 from llama_index.core.chat_engine import CondenseQuestionChatEngine
-
+from llama_index.core.storage.chat_store import SimpleChatStore
 
 
 config = Config()
@@ -40,7 +40,12 @@ vector_store = load_vector_database(persist_dir, "load")
 
 # store memory
 # https://docs.llamaindex.ai/en/stable/examples/chat_engine/chat_engine_context/
-memory = ChatMemoryBuffer.from_defaults(token_limit=3900)
+
+chat_store = SimpleChatStore()
+memory = ChatMemoryBuffer.from_defaults(
+    token_limit=3900,
+    chat_store=chat_store,
+    chat_store_key="user1",)
 # vector_store[type]
 # index = VectorStoreIndex.from_vector_store(embed_model=embed_model, vector_store=vector_store)
 
@@ -77,15 +82,6 @@ def bot(history, type):
         """\
 你是一个心理咨询AI助手, 你的目标是帮助用户舒服地分享他们的想法和情感。你的回答应该是同情、鼓励和支持的，同时保持温暖和温和的语气。
 
-<对话记录>
-{chat_history}
-
-<专业知识>
-{question}
-
-<用户问题>
-
-
 要求：你的回复应该是简单温和的一句话，至少包括2个部分
 (1) 承认他们的情绪并确认他们的感受
 (2) 引导来访者继续阐述他们的感受和体验 (必须有这一步)
@@ -95,18 +91,26 @@ def bot(history, type):
 用户：我最近一直感到很焦虑。
 
 回应：听到你感到焦虑，我很抱歉。焦虑确实让人很难受。你觉得是什么原因让你感到特别焦虑呢？我在这里聆听你。
+
+<对话记录>
+{chat_history}
+
+<专业知识>
+{question}
+
+<用户问题>
+
 """
     )
     chat_engine = CondenseQuestionChatEngine.from_defaults(
         query_engine=query_engine,
         condense_question_prompt=custom_prompt,
-        chat_history=memory.get_all(),
+        memory=memory,
         verbose=True,
         llm=llm,
     )
     ######################chat_engine end#################################
 
-   
 
     print(f"\n用户输入: {prompt}")
     print("模型输出: ", end="", flush=True)
@@ -127,10 +131,13 @@ def bot(history, type):
 
     end_time = time.time()
     print(f"\n\n生成完成，用时: {end_time - start_time:.2f} 秒")
+    print(memory.to_string())
+    
 
 # 定义停止生成函数
 def stop_generation():
     stop_event.set()  # 设置停止事件
+    chat_store.persist(persist_path="chat_store.json")
 
 # 使用Gradio创建Web界面
 with gr.Blocks() as demo:
