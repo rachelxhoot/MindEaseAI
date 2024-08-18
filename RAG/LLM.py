@@ -106,7 +106,7 @@ def setup_local_llm(config: Config) -> IpexLLM:
     return IpexLLM.from_model_id_low_bit(
         model_name=config.get("model_path"),
         tokenizer_name=config.get("tokenizer_path"),
-        context_window=384,
+        context_window=4096,
         max_new_tokens=config.get("max_new_tokens"),
         generate_kwargs={"temperature": 0.7, "do_sample": True},
         model_kwargs={},
