@@ -44,8 +44,7 @@ vector_store = load_vector_database(persist_dir, "load")
 chat_store = SimpleChatStore()
 memory = ChatMemoryBuffer.from_defaults(
     token_limit=3900,
-    chat_store=chat_store,
-    chat_store_key="user1",)
+    chat_store=chat_store,)
 # vector_store[type]
 # index = VectorStoreIndex.from_vector_store(embed_model=embed_model, vector_store=vector_store)
 
@@ -105,6 +104,7 @@ def bot(history, type):
     chat_engine = CondenseQuestionChatEngine.from_defaults(
         query_engine=query_engine,
         condense_question_prompt=custom_prompt,
+        chat_history=memory.get_all(),
         memory=memory,
         verbose=True,
         llm=llm,
@@ -131,13 +131,18 @@ def bot(history, type):
 
     end_time = time.time()
     print(f"\n\n生成完成，用时: {end_time - start_time:.2f} 秒")
-    print(memory.to_string())
+    
+    
     
 
 # 定义停止生成函数
 def stop_generation():
     stop_event.set()  # 设置停止事件
+    
+    
+def save_memory_json():
     chat_store.persist(persist_path="chat_store.json")
+    print(memory.to_string().encode('utf-8').decode('unicode_escape'))
 
 # 使用Gradio创建Web界面
 with gr.Blocks() as demo:
@@ -150,6 +155,7 @@ with gr.Blocks() as demo:
     msg = gr.Textbox(placeholder="请输入您的问题或感受...", label="您的消息")  # 用户输入文本框
     clear = gr.Button("清除")  # 清除按钮
     stop = gr.Button("停止生成")  # 停止生成按钮
+    save_memory = gr.Button("保存记录")
 
     # 设置用户输入提交后的处理流程
     msg.submit(user, [msg, chatbot], [msg, chatbot], queue=False).then(
@@ -157,6 +163,7 @@ with gr.Blocks() as demo:
     )
     clear.click(lambda: None, None, chatbot, queue=False)  # 清除按钮功能
     stop.click(stop_generation, queue=False)  # 停止生成按钮功能
+    save_memory.click(save_memory_json, queue=False)
 
 if __name__ == "__main__":
     print("启动 Gradio 界面...")
