@@ -99,7 +99,27 @@ def download_and_quantize_model(model_name, cache_dir, quantize_dir, revision='m
     model.save_low_bit(quantize_dir)
     tokenizer.save_pretrained(quantize_dir)
     print(f"Quantized model and tokenizer saved to: {quantize_dir}")
+    
+    
+def download_4bit_quantized_model(model_name, cache_dir, revision='master'):
+    """
+    Download, and save the quantized model and tokenizer.
 
+    Parameters:
+    - model_name: Name of the model.
+    - cache_dir: Directory to cache the downloaded model.
+    - revision: Model version, default is 'master'.
+    """
+    model_dir = snapshot_download(model_name, cache_dir=os.path.join(cache_dir), revision=revision)
+    print(f"Model downloaded to: {model_dir}")
+
+    model_path = os.path.join(cache_dir, model_name)
+    config = Config()
+    config.set('quantize_dir', model_path)
+    config.set('tokenizer_path', model_path)
+    print(f"Quantized model and tokenizer saved to: {model_path}")
+
+    
 def download_embedding_model(embedding_model, cache_dir):
     embedding_model_dir = snapshot_download(embedding_model, cache_dir=cache_dir, revision='master')
     # 更新配置数据
