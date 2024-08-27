@@ -1,18 +1,18 @@
 import os
 from typing import Dict, List, Optional, Tuple, Union
 
-import PyPDF2
-import markdown
-import html2text
+
 import json
-from tqdm import tqdm
+
 import tiktoken
-from bs4 import BeautifulSoup
-import re
+
+
 import platform
 if platform.machine() != "arm64":
     from modelscope import snapshot_download, AutoModel
-    from ipex_llm.transformers import AutoModelForCausalLM
+    # from ipex_llm.transformers import AutoModelForCausalLM
+    from optimum.intel import OVModelForCausalLM, OVWeightQuantizationConfig
+    import nncf
 else:
     print("Running on Apple Silicon, skipping import ipex.")
 from transformers import AutoTokenizer
@@ -24,7 +24,7 @@ from llama_index.core.node_parser import SentenceSplitter
 enc = tiktoken.get_encoding("cl100k_base")
 
 import yaml
-import shutil
+
 
 class Config:
     def __init__(self):
@@ -92,11 +92,16 @@ def download_and_quantize_model(model_name, cache_dir, quantize_dir, revision='m
     print(f"Model downloaded to: {model_dir}")
 
     model_path = os.path.join(cache_dir, model_name.replace('.', '___'))
-    model = AutoModelForCausalLM.from_pretrained(model_path, load_in_low_bit=low_bit, trust_remote_code=True)
+    # model = AutoModelForCausalLM.from_pretrained(model_path, load_in_low_bit=low_bit, trust_remote_code=True)
+    model = OVModelForCausalLM.from_pretrained(
+    model_path,
+    export=True,
+    quantization_config=OVWeightQuantizationConfig(bits=4),)
+
     tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
     print(f"Model and tokenizer loaded from: {model_path}")
 
-    model.save_low_bit(quantize_dir)
+    model.save_pretrained(quantize_dir)
     tokenizer.save_pretrained(quantize_dir)
     print(f"Quantized model and tokenizer saved to: {quantize_dir}")
     

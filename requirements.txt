@@ -1,4 +1,4 @@
-ipex-llm
+openvino
 gradio 
 streamlit
 openai

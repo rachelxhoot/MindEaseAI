@@ -1,7 +1,8 @@
 import os
 from typing import Dict, List, Optional, Tuple, Union
 
-from ipex_llm.llamaindex.llms import IpexLLM
+# from ipex_llm.llamaindex.llms import IpexLLM
+from llama_index.llms.openvino import OpenVINOLLM
 from .utils import messages_to_prompt, completion_to_prompt, Config
 
 PROMPT_TEMPLATE = dict(
@@ -90,7 +91,7 @@ class DeepSeekChat(BaseModel):
         )
         return response.choices[0].message.content
     
-def setup_local_llm(config: Config) -> IpexLLM:
+def setup_local_llm(config: Config) -> OpenVINOLLM:
     """
     设置语言模型
     
@@ -98,14 +99,13 @@ def setup_local_llm(config: Config) -> IpexLLM:
         config (Config): 配置对象
     
     Returns:
-        IpexLLM: 配置好的语言模型
+        OpenVINOLLM: 配置好的语言模型
     """
     #*****************
     #Hyperparameter  do_sample
     #************
-    return IpexLLM.from_model_id_low_bit(
-        model_name=config.get("model_path"),
-        tokenizer_name=config.get("tokenizer_path"),
+    return OpenVINOLLM(
+        model_id_or_path=config.get("model_path"),
         context_window=4096,
         max_new_tokens=config.get("max_new_tokens"),
         generate_kwargs={"temperature": 0.7, "do_sample": True},
