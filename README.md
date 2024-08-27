@@ -18,7 +18,7 @@ python3 prepare.py
 
 ### 运行 RAG App
 ```bash
-python3 demo.py # 中间需要手动输入自己的dsw号
+python3 demo_chat_engine.py # 中间需要手动输入自己的dsw号
 ```
 
 ## Reference：
