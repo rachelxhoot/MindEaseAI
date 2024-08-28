@@ -5,6 +5,7 @@ Ref:https://docs.llamaindex.ai/en/stable/examples/chat_engine/chat_engine_conden
 
 import os
 import time
+from datetime import datetime
 
 from typing import Optional
 from threading import Thread, Event
@@ -141,7 +142,8 @@ def stop_generation():
     
     
 def save_memory_json():
-    chat_store.persist(persist_path="chat_store.json")
+    date_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+    chat_store.persist(persist_path=f"chat_store/{date_str}.json")
     print(memory.to_string().encode('utf-8').decode('unicode_escape'))
 
 # 使用Gradio创建Web界面
