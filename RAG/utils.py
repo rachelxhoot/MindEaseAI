@@ -15,7 +15,8 @@ if platform.machine() != "arm64":
     import nncf
 else:
     print("Running on Apple Silicon, skipping import ipex.")
-from transformers import AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer
+import openvino as ov
 
 from llama_index.readers.file import PyMuPDFReader
 from llama_index.core.schema import TextNode
@@ -78,7 +79,7 @@ class Config:
                 print(f"The path {path} is not a directory or does not exist.")
 
 
-def download_and_quantize_model(model_name, cache_dir, quantize_dir, revision='master'):
+def download_and_quantize_model(model_name, cache_dir, quantize_dir, revision='master', low_bit="sym_int4"):
     """
     Download, quantize, and save the model and tokenizer.
 
@@ -92,7 +93,7 @@ def download_and_quantize_model(model_name, cache_dir, quantize_dir, revision='m
     print(f"Model downloaded to: {model_dir}")
 
     model_path = os.path.join(cache_dir, model_name.replace('.', '___'))
-    # model = AutoModelForCausalLM.from_pretrained(model_path, load_in_low_bit=low_bit, trust_remote_code=True)
+    # model = AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True)
     model = OVModelForCausalLM.from_pretrained(
     model_path,
     export=True,
@@ -106,7 +107,7 @@ def download_and_quantize_model(model_name, cache_dir, quantize_dir, revision='m
     print(f"Quantized model and tokenizer saved to: {quantize_dir}")
     
     
-def download_4bit_quantized_model(model_name, cache_dir, quantize_dir, revision='master'):
+def download_4bit_quantized_model(model_name, cache_dir, revision='master'):
     """
     Download, and save the quantized model and tokenizer.
 
@@ -115,22 +116,19 @@ def download_4bit_quantized_model(model_name, cache_dir, quantize_dir, revision=
     - cache_dir: Directory to cache the downloaded model.
     - revision: Model version, default is 'master'.
     """
-    model_dir = snapshot_download(model_name, cache_dir=os.path.join(cache_dir), revision=revision)
+    model_dir = snapshot_download(model_name, cache_dir=os.path.join(cache_dir))
     print(f"Model downloaded to: {model_dir}")
 
     model_path = os.path.join(cache_dir, model_name.replace('.', '___'))
-    # model = AutoModelForCausalLM.from_pretrained(model_path, load_in_low_bit=low_bit, trust_remote_code=True)
-    model = OVModelForCausalLM.from_pretrained(
-    model_path,
-
-    quantization_config=OVWeightQuantizationConfig(bits=4),)
-
+    model = AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True)
+    model =  OVModelForCausalLM.from_pretrained(model_path, export=True)
     tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
     print(f"Model and tokenizer loaded from: {model_path}")
 
     model.save_pretrained(quantize_dir)
     tokenizer.save_pretrained(quantize_dir)
     print(f"Quantized model and tokenizer saved to: {quantize_dir}")
+
     
 def download_embedding_model(embedding_model, cache_dir):
     embedding_model_dir = snapshot_download(embedding_model, cache_dir=cache_dir, revision='master')
