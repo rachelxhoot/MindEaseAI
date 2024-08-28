@@ -1,7 +1,7 @@
 # MindEaseAI Demo
 
 ## Run
-魔搭Notebook环境: `ubuntu22.04-py310-torch2.1.2-tf2.14.0-1.14.0`
+ecs环境: `ubuntu22.04`
 
 在 Terminal 执行下面命令行
 ```bash
@@ -16,10 +16,24 @@ pip install -r requirements.txt
 python3 prepare.py
 ```
 
+### 准备文件运行gradio
+```bash
+mkdir -p /var/www/gradio_app
+chown root /var/www/gradio_app
+chmod -R 755 /var/www/gradio_app
+```
+
 ### 运行 RAG App
 ```bash
-python3 demo_chat_engine.py # 中间需要手动输入自己的dsw号
+python3 demo_chat_engine.py 
 ```
+
+### 如果ecs无法打开local path
+在阿里云打开7860端口（gradio 默认端口）
+```bash
+ssh -L 7860:localhost:7860 username@your_ecs_public_ip
+```
+成功后本地浏览器中输入 http://localhost:7860/ 即可访问Web界面。
 
 ## Reference：
 - [TinyRAG](https://github.com/datawhalechina/tiny-universe/tree/main/content/TinyRAG)

@@ -106,14 +106,13 @@ def download_and_quantize_model(model_name, cache_dir, quantize_dir, revision='m
     print(f"Quantized model and tokenizer saved to: {quantize_dir}")
     
     
-def download_and_quantize_model(model_name, cache_dir, quantize_dir, revision='master'):
+def download_4bit_quantized_model(model_name, cache_dir, quantize_dir, revision='master'):
     """
-    Download, quantize, and save the model and tokenizer.
+    Download, and save the quantized model and tokenizer.
 
     Parameters:
     - model_name: Name of the model.
     - cache_dir: Directory to cache the downloaded model.
-    - quantize_dir: Directory to save the quantized model and tokenizer.
     - revision: Model version, default is 'master'.
     """
     model_dir = snapshot_download(model_name, cache_dir=os.path.join(cache_dir), revision=revision)
@@ -123,6 +122,7 @@ def download_and_quantize_model(model_name, cache_dir, quantize_dir, revision='m
     # model = AutoModelForCausalLM.from_pretrained(model_path, load_in_low_bit=low_bit, trust_remote_code=True)
     model = OVModelForCausalLM.from_pretrained(
     model_path,
+
     quantization_config=OVWeightQuantizationConfig(bits=4),)
 
     tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
@@ -131,7 +131,6 @@ def download_and_quantize_model(model_name, cache_dir, quantize_dir, revision='m
     model.save_pretrained(quantize_dir)
     tokenizer.save_pretrained(quantize_dir)
     print(f"Quantized model and tokenizer saved to: {quantize_dir}")
-
     
 def download_embedding_model(embedding_model, cache_dir):
     embedding_model_dir = snapshot_download(embedding_model, cache_dir=cache_dir, revision='master')

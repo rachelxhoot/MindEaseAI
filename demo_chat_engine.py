@@ -73,7 +73,7 @@ def bot(history, type):
 
     # 设置检索器
     retriever = VectorDBRetriever(
-        vector_store[type], embed_model, query_mode="default", similarity_top_k=1
+        vector_store[type], embed_model, query_mode="default", similarity_top_k=3
     )
 
     query_engine = RetrieverQueryEngine.from_args(retriever, llm=llm, streaming=True)
@@ -171,6 +171,6 @@ if __name__ == "__main__":
     print("启动 Gradio 界面...")
     demo.queue()  # 启用队列处理请求
     # 提示用户输入DSW号
-    dsw_number = input("请输入DSW号 (例如: 525085)")
-    root_path = f"/dsw-{dsw_number}/proxy/7860/"
+    # dsw_number = input("请输入DSW号 (例如: 525085)")
+    root_path = f"/var/www/gradio_app"
     demo.launch(root_path=root_path)  # 兼容魔搭情况下的路由
