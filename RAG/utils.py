@@ -15,8 +15,8 @@ if platform.machine() != "arm64":
     import nncf
 else:
     print("Running on Apple Silicon, skipping import ipex.")
-from transformers import AutoModelForCausalLM, AutoTokenizer
-import openvino as ov
+from transformers import AutoTokenizer
+
 
 from llama_index.readers.file import PyMuPDFReader
 from llama_index.core.schema import TextNode
@@ -107,7 +107,7 @@ def download_and_quantize_model(model_name, cache_dir, quantize_dir, revision='m
     print(f"Quantized model and tokenizer saved to: {quantize_dir}")
     
     
-def download_4bit_quantized_model(model_name, cache_dir, revision='master'):
+def download_4bit_quantized_model(model_name, cache_dir, quantize_dir):
     """
     Download, and save the quantized model and tokenizer.
 
@@ -120,7 +120,6 @@ def download_4bit_quantized_model(model_name, cache_dir, revision='master'):
     print(f"Model downloaded to: {model_dir}")
 
     model_path = os.path.join(cache_dir, model_name.replace('.', '___'))
-    model = AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True)
     model =  OVModelForCausalLM.from_pretrained(model_path, export=True)
     tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
     print(f"Model and tokenizer loaded from: {model_path}")
